@@ -1,0 +1,135 @@
+﻿@page
+@model PremFEPost.Pages.LoadExcelModel
+
+
+
+@if (User.IsInRole("Initiator"))
+{
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            Upload Premium Excel Files
+        </div>
+        <form method="post" enctype="multipart/form-data">
+            <div class="card-body">
+                <div class="form-control">
+                    <label>Choose file to upload</label>
+                    <br />
+                    <input type="file" name="excelFile" accept=".xlsx" required />
+                </div>
+                <br />
+                <button class="btn btn-dark" type="submit">Submit for processing</button>
+            </div>
+        </form>
+
+        @if (Model.UploadSuccess)
+        {
+            <div class="card-footer">
+                <div class=" bg-success">
+                    <p>Process Completed!</p>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+
+
+
+
+
+<br />
+
+<div class="card-body">
+    <h5>Batch Details</h5>
+    <form method="get" class="mb-3">
+        <input type="text " name="SearchTerm" value="@Model.SearchTerm" placeholder="Search..." />
+        
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+    <table id="batchDetailsTable" class="table table-bordered">
+        <thead>
+            <tr>
+                <th>File Name</th>
+                <th>Upload Date</th>
+                <th>Uploaded By</th>
+                <th>Authorised By</th>
+                <th>Status</th>
+                <th>Records</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var batch in Model.BatchDetailsList)
+            {
+                <tr>
+                    <td>@batch.FileName</td>
+                    <td>@batch.Date</td>
+                    <td>@batch.UploadedBy</td>
+                    <td>@batch.AuthorisedBy</td>
+                    <td>@batch.Status</td>
+                    <td>@batch.Records</td>
+                    <td>
+                        <div class="row">
+                            @if (User.IsInRole("Approver"))
+                            {
+                                if (@batch.Status == "Pending")
+                                {
+                                    <div class="col">
+                                        <form method="post" asp-page-handler="Approve" class="d-inline">
+                                            <input type="hidden" name="id" value="@batch.Id" />
+                                            <button type="submit" class="btn btn-success">Approve</button>
+                                        </form>
+
+                                        <form method="post" asp-page-handler="Reject" class="d-inline">
+                                            <input type="hidden" name="id" value="@batch.Id" />
+                                            <button type="submit" class="btn btn-danger">Reject</button>
+                                        </form>
+                                    </div>
+                                }
+                            }
+                            <div class="col">
+                                <a class="btn btn-primary" asp-page="/BatchItems" asp-route-id="@batch.Id">View Items</a>
+                            </div>
+                        </div>
+
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @if (Model.BatchDetailsList != null && Model.BatchDetailsList.Any())
+    {
+        <nav aria-label="Page navigation example">
+            <ul class="pagination">
+                <li class="page-item @(Model.PageIndex == 0 ? "disabled" : "")">
+                    <a class="page-link" asp-page="./BatchDetailsList"
+                       asp-route-id="@Model.BatchId"
+                       asp-route-pageIndex="@(Model.PageIndex - 1)"
+                       aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                @for (int i = Math.Max(0, Model.PageIndex - 5); i <= Math.Min(Model.TotalPages - 1, Model.PageIndex + 5); i++)
+                {
+                    <li class="page-item @(i == Model.PageIndex ? "active" : "")">
+                        <a class="page-link" asp-page="./BatchDetailsList"
+                           asp-route-id="@Model.BatchId"
+                           asp-route-pageIndex="@i">
+                            @(i + 1)
+                        </a>
+                    </li>
+                }
+                <li class="page-item @(Model.PageIndex == (Model.TotalPages - 1) ? "disabled" : "")">
+                    <a class="page-link" asp-page="./BatchDetailsList"
+                       asp-route-id="@Model.BatchId"
+                       asp-route-pageIndex="@(Model.PageIndex + 1)"
+                       aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    }
+
+</div>

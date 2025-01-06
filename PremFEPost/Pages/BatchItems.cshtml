@@ -1,0 +1,107 @@
+﻿@page
+@model PremFEPost.Pages.BatchItemsModel
+
+<div class=" card-footer">
+    <div class="row">
+        <div class="col-auto">
+            <button class="btn btn-warning"> Pending @Model.Pending </button>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-success"> Successful @Model.Success</button>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-danger"> Failed @Model.Failed</button>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary"> All Records @Model.Allrecords</button>
+        </div>
+    </div>
+</div>
+<br />
+<form method="get" class="mb-3">
+    <input type="text " name="SearchTerm" value="@Model.SearchTerm" placeholder="Search..." />
+    <input type="hidden" name="id" value="@Model.BatchId" />
+    <button type="submit" class="btn btn-primary">Search</button>
+</form>
+@* <a href=" @Url.Page("/BatchItems", "DownloadExcel", new { id = Model.BatchId, SearchTerm = Model.SearchTerm })" class="btn btn-primary mb-3">Download Current Page</a> *@
+<a href="@Url.Page("/BatchItems","DownloadAllExcel",new { id = Model.BatchId })" class="btn btn-primary mb-3">Download All Records</a>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Tran Reference</th>
+            <th>Currency</th>
+            <th>Amount</th>
+            <th>DR Account</th>
+            <th>CR Account</th>
+            <th>Narration</th>
+            <th>Status</th>
+            <th>Message</th>
+            <th>Date Time</th>
+            <th>Reference</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.BatchItems != null && Model.BatchItems.Any())
+        {
+            foreach (var item in Model.BatchItems)
+            {
+                <tr>
+                    <td>@item.Transactionreference</td>
+                    <td>@item.Currency</td>
+                    <td>@item.Amount</td>
+                    <td>@item.AccountNo</td>
+                    <td>@item.DestinationAccount</td>
+                    <td>@item.Narration</td>
+                    <td>@item.Status</td>
+                    <td>@item.ResponseMessage</td>
+                    <td>@item.TranDate</td>
+                    <td>@item.Reference</td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="9">No items found for this batch.</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (Model.BatchItems != null && Model.BatchItems.Any())
+{
+    <nav aria-label="Page navigation example">
+        <ul class="pagination">
+            <li class="page-item @(Model.PageIndex == 0 ? "disabled" : "")">
+                <a class="page-link" asp-page="./BatchItems"
+                   asp-route-id="@Model.BatchId"
+                   asp-route-pageIndex="@(Model.PageIndex - 1)"
+                   aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            @for (int i = Math.Max(0, Model.PageIndex - 5); i <= Math.Min(Model.TotalPages - 1, Model.PageIndex + 5); i++)
+            {
+                <li class="page-item @(i == Model.PageIndex ? "active" : "")">
+                    <a class="page-link" asp-page="./BatchItems"
+                       asp-route-id="@Model.BatchId"
+                       asp-route-pageIndex="@i">
+                        @(i + 1)
+                    </a>
+                </li>
+            }
+            <li class="page-item @(Model.PageIndex == (Model.TotalPages - 1) ? "disabled" : "")">
+                <a class="page-link" asp-page="./BatchItems"
+                   asp-route-id="@Model.BatchId"
+                   asp-route-pageIndex="@(Model.PageIndex + 1)"
+                   aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+}
+
+
+

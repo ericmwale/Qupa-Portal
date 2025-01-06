@@ -1,0 +1,196 @@
+﻿@page "/batchitems/{BatchId:int}"
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.JSInterop
+@using PremFEPost.Data
+@using OfficeOpenXml
+@inject NavigationManager Navigation
+@inject ApplicationDbContext DbContext
+@inject IJSRuntime JS
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [StreamRendering]
+
+<h3>Batch Items</h3>
+
+@if (TranDetailsList == null)
+{
+    <p>Loading...</p>
+}
+else if (TranDetailsList.Count == 0)
+{
+    <p>No transaction details found for this batch.</p>
+}
+else
+{
+    <div>
+        <button @onclick="BacktoHome" class="btn btn-secondary ms-2">Back</button>
+        <button @onclick="DownloadExcel" class="bg-success btn text-white">Download All Records to Excel</button>
+        <button class="btn-danger text-white btn">Failed Records @failed </button>
+        <button class="btn-success text-white btn ">Success Records @success </button>
+        <button class="btn-warning text-white btn">Pending Records @pending </button>
+
+    </div>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Transaction Type</th>
+                <th>Currency</th>
+                <th>DR Account</th>
+                <th>CR Account</th>
+                <th>Narration</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Amount</th>
+                <th>Transaction Reference</th>
+   
+                
+                
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var tran in PaginatedTranDetails)
+            {
+                <tr>
+                    <td>@tran.TranType</td>
+                    <td>@tran.Currency</td>
+                    <td>@tran.AccountNo</td>
+                    <td>@tran.DestinationAccount</td>
+                    <td>@tran.Narration</td>
+                    <td>@tran.Status</td>
+                    <td>@tran.TranDate</td>
+                    <td>@tran.Amount</td>
+                    <td>@tran.Transactionreference</td>
+            
+                   
+                    <!-- Add other data cells as needed -->
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div>
+        <button @onclick="PreviousPage" disabled="@(!HasPreviousPage)">Previous</button>
+        <span>Page @CurrentPage of @TotalPages</span>
+        <button @onclick="NextPage" disabled="@(!HasNextPage)">Next</button>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int BatchId { get; set; }
+    private List<TranDetails> TranDetailsList;
+    private List<TranDetails> PaginatedTranDetails = new List<TranDetails>();
+    private int CurrentPage = 1;
+    private int PageSize = 15; // Number of items per page
+    private int TotalItems;
+    private int TotalPages => (int)Math.Ceiling((double)TotalItems / PageSize);
+
+    int failed = 0 ;
+    int success = 0;
+    int pending = 0;
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        TranDetailsList = await DbContext.TranDetails
+            .Where(t => t.BatchID == BatchId.ToString())
+            .ToListAsync();
+
+        failed = TranDetailsList.Where(t => t.Status == "Failed").Count();
+        success = TranDetailsList.Where(t => t.Status == "Success").Count();
+        pending = TranDetailsList.Where(t => t.Status == "Pending").Count();
+        TotalItems = TranDetailsList.Count;
+        UpdatePaginatedTranDetails();
+    }
+
+    private void UpdatePaginatedTranDetails()
+    {
+        PaginatedTranDetails = TranDetailsList
+            .Skip((CurrentPage - 1) * PageSize)
+            .Take(PageSize)
+            .ToList();
+    }
+
+    private bool HasPreviousPage => CurrentPage > 1;
+    private bool HasNextPage => CurrentPage < TotalPages;
+
+    private void BacktoHome()
+    {
+        
+        Navigation.NavigateTo($"/loadexcel");
+    }
+    private void PreviousPage()
+    {
+        if (HasPreviousPage)
+        {
+            CurrentPage--;
+            UpdatePaginatedTranDetails();
+        }
+    }
+
+    private void NextPage()
+    {
+        if (HasNextPage)
+        {
+            CurrentPage++;
+            UpdatePaginatedTranDetails();
+        }
+    }
+
+    private async Task DownloadExcel()
+    {
+        var allRecords = await DbContext.TranDetails
+            .Where(t => t.BatchID == BatchId.ToString())
+            .ToListAsync();
+
+        // Generate Excel file (using a library like EPPlus or ClosedXML)
+        var excelFile = GenerateExcelFile(allRecords);
+
+        // Return the file as a downloadable response
+        var fileName = $"TransactionDetails_Batch_{BatchId}.xlsx";
+        using var stream = new MemoryStream();
+        excelFile.SaveAs(stream);
+        stream.Position = 0;
+
+        // Trigger download (you may need to use JS interop for this)
+        var url = $"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{Convert.ToBase64String(stream.ToArray())}";
+        await JS.InvokeVoidAsync("open", url, "_blank");
+    }
+
+    private ExcelPackage GenerateExcelFile(List<TranDetails> records)
+    {
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        var package = new ExcelPackage();
+        var worksheet = package.Workbook.Worksheets.Add("Transactions");
+
+        // Add headers
+        worksheet.Cells[1, 1].Value = "Transaction Type";
+        worksheet.Cells[1, 2].Value = "Currency";
+        worksheet.Cells[1, 3].Value = "DR Account";
+        worksheet.Cells[1, 4].Value = "CR Account";
+        worksheet.Cells[1, 5].Value = "Narration";
+        worksheet.Cells[1, 6].Value = "Status";
+        worksheet.Cells[1, 7].Value = "Date";
+        worksheet.Cells[1, 8].Value = "Amount";
+        worksheet.Cells[1, 9].Value = "Transaction Reference";
+
+        // Add data
+        for (int i = 0; i < records.Count; i++)
+        {
+            var record = records[i];
+            worksheet.Cells[i + 2, 1].Value = record.TranType;
+            worksheet.Cells[i + 2, 2].Value = record.Currency;
+            worksheet.Cells[i + 2, 3].Value = record.AccountNo;
+            worksheet.Cells[i + 2, 4].Value = record.DestinationAccount;
+            worksheet.Cells[i + 2, 5].Value = record.Narration;
+            worksheet.Cells[i + 2, 6].Value = record.Status;
+            worksheet.Cells[i + 2, 7].Value = record.TranDate;
+            worksheet.Cells[i + 2, 8].Value = record.Amount;
+            worksheet.Cells[i + 2, 9].Value = record.Transactionreference;
+        }
+
+        return package;
+    }
+
+}

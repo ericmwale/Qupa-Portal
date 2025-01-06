@@ -1,0 +1,48 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+
+<div class="text-center card-header">
+    <form method="post">
+        <label for="SelectedDate">Enter Date:</label>
+        <input type="date" asp-for="SelectedDate" />
+        <button type="submit" class="btn btn-success">Submit</button>
+    </form>
+</div>
+
+@if (Model.TransactionStats != null && Model.TransactionStats.Any())
+{
+    <div>
+        <h2>Transaction Statistics</h2>
+        <table class="table table-bordered table-responsive ">
+            <thead>
+                <tr>
+                    <th>Currency</th>
+                    <th>Status</th>
+                    <th>Transaction Date</th>
+                    <th>Batch ID</th>
+                    <th>Total Records</th>
+                    <th>Total Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var stat in Model.TransactionStats)
+                {
+
+                    <tr class="@(stat.Status == "Success" ? "bg-success text-white" : stat.Status == "Failed" ? "bg-danger text-white" : "")">
+                        <td>@stat.Currency</td>
+                        <td>@stat.Status</td>
+                        <td>@stat.TransactionDate.ToShortDateString()</td>
+                        <td>@stat.BatchID</td>
+                        <td>@stat.TotalRecords</td>
+                        <td>@stat.TotalAmount.ToString("C", new System.Globalization.CultureInfo("en-US")).TrimStart('$') </td>
+
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

@@ -1,0 +1,85 @@
+﻿@page
+@model PremFEPost.Areas.Identity.Pages.Account.RegisterModel
+
+@{
+    ViewData["Title"] = "Register";
+}
+
+
+
+<div class="row">
+    <div class="col-lg-6 mx-auto rounded border p-3">
+        <h2>Register</h2>
+        @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+        {
+            <div class="alert alert-success" role="alert">
+                @Model.SuccessMessage
+            </div>
+        }
+
+        <hr />
+        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+        <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+
+
+
+
+            <div class="row mb-3">
+                <label class="col-sm-4 col-form-label">First Name</label>
+                <div class="col-sm-8">
+                    <input class="form-control" asp-for="Input.FirstName" />
+                    <span asp-validation-for="Input.FirstName" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label class="col-sm-4 col-form-label">Last Name</label>
+                <div class="col-sm-8">
+                    <input class="form-control" asp-for="Input.LastName" />
+                    <span asp-validation-for="Input.LastName" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label class="col-sm-4 col-form-label">User Role</label>
+                <div class="col-sm-8">
+                    <select asp-for="Input.SelectedRole" class="form-select">
+                        <option value="">Select a role</option>
+                        @foreach (var role in Model.Input.Roles)
+                        {
+                            <option value="@role.Value">@role.Text</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Input.SelectedRole" class="text-danger"></span>
+                </div>
+            </div>
+
+
+            <div class="row mb-3">
+                <label class="col-sm-4 col-form-label">Email</label>
+                <div class="col-sm-8">
+                   <input class="form-control" asp-for ="Input.Email" />
+                   <span asp-validation-for="Input.Email" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label class="col-sm-4 col-form-label">User Name</label>
+                <div class="col-sm-8">
+                    <input class="form-control" asp-for="Input.Username" />
+                    <span asp-validation-for="Input.Username" class="text-danger"></span>
+                </div>
+            </div>
+
+            <hr />
+             <div class="row card-footer text-center">
+                <div class="col-md-6"><button id="registerSubmit" type="submit" class=" btn  btn-primary">Register</button></div>
+                <div class="col-md-6"><button id="log"  class=" btn  btn-danger">Cancel</button></div>
+             </div>
+            
+        </form>
+    </div>
+
+</div>
+
+
