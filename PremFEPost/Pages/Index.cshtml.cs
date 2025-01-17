@@ -36,7 +36,7 @@ namespace PremFEPost.Pages
             }
 
             // Load default stats
-            LoadTransactionStats(DateTime.Today);
+           // LoadTransactionStats(DateTime.Today);
             return Page(); // Return the page after loading stats
         }
 
@@ -49,7 +49,7 @@ namespace PremFEPost.Pages
         private void LoadTransactionStats(DateTime dateToUse)
         {
            
-            TransactionStats = _context.TranDetails
+            TransactionStats = _context.LoanDetails
             .AsEnumerable() // Load data into memory
             .Where(t => decimal.TryParse(t.Amount, NumberStyles.Any, CultureInfo.InvariantCulture, out _)) // Ensure Amount is numeric
             .Where(t => DateTime.ParseExact(t.TranDate.Substring(0, 8), "yyyyMMdd", CultureInfo.InvariantCulture).Date == dateToUse.Date)

@@ -8,6 +8,7 @@ using System.Security.Cryptography;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using System.Diagnostics;
 
 namespace PremFEPost.Pages
 {
@@ -178,7 +179,7 @@ namespace PremFEPost.Pages
                         var bdetails = new BatchDetails
                         {
                             FileName = excelFile.FileName,
-                            Date = DateTime.Now.ToString("yyyyMMddHHmm"),
+                            Date = DateTime.Now.ToString("yyyyMMdd"),
                            
                             UploadedBy = userName,
                             AuthorisedBy = "",
@@ -190,38 +191,47 @@ namespace PremFEPost.Pages
 
                         for (int row = 2; row <= rowCount; row++)
                         {
-                            var trand = new TranDetails
+                            var clientDetails = new ClientDetails();
+                            var loandetails = new LoanDetails();
+                            var nid = worksheet.Cells[row, 10].Text;
+                            if(nid != null || nid != "")
                             {
-                                FileName = bdetails.FileName,
-                                BatchID = bdetails.Id.ToString(),
-                                TranType = worksheet.Cells[row, 1].Text,
-                                Currency = worksheet.Cells[row, 2].Text,
-                                Channel = worksheet.Cells[row, 3].Text,
-                                Amount = worksheet.Cells[row, 4].Text,
-                                Phone = worksheet.Cells[row, 5].Text,
-                                DestinationPhone = worksheet.Cells[row, 6].Text,
-                                Profile = worksheet.Cells[row, 7].Text,
-                                AccountNo = worksheet.Cells[row, 8].Text,
-                                DestinationAccount = worksheet.Cells[row, 9].Text,
-                                Reference = worksheet.Cells[row, 10].Text,
-                                DestinationName = worksheet.Cells[row, 11].Text,
-                                Narration = worksheet.Cells[row, 12].Text,
-                                BankSwift = worksheet.Cells[row, 13].Text,
-                                BranchCode = worksheet.Cells[row, 14].Text,
-                                BatchTracker = worksheet.Cells[row, 15].Text,
-                                Status = "Pending",
-                                ResponseMessage = "Pending",
-                                Transactionreference = GenerateUniqueReference(),
-                                TranDate = DateTime.Now.ToString("yyyyMMddHHmm"),
-                                ProductCode = "Default"
-                            };
-                            if(trand.Reference.Length > 4)
-                            {
-                                DbContext.TranDetails.Add(trand);
+                             clientDetails = new ClientDetails
+                                {
+                                    FileName = bdetails.FileName,
+                                    BatchId = bdetails.Id.ToString(),
+                                    FirstName = worksheet.Cells[row, 1].Text,
+                                    MiddleName = worksheet.Cells[row, 2].Text,
+                                    LastName = worksheet.Cells[row, 3].Text,
+                                    Gender = worksheet.Cells[row, 4].Text.ToUpper(),
+                                    EmailAddress = worksheet.Cells[row, 5].Text,
+                                    Address = worksheet.Cells[row, 6].Text,
+                                    BankName = worksheet.Cells[row, 7].Text,
+                                    BankAccount = worksheet.Cells[row, 8].Text,
+                                    MobileNumber = worksheet.Cells[row, 9].Text,
+                                    NationalID = worksheet.Cells[row, 10].Text,
+                                    DateOfBirth = DateTime.Parse(worksheet.Cells[row, 10].Text).ToString("yyyyMMdd")
+                                };
+                                DbContext.ClientDetails.Add(clientDetails);
+
+                               loandetails = new LoanDetails
+                                {
+                                    FileName = bdetails.FileName,
+                                    BatchID = bdetails.Id.ToString(),
+                                    ClientID = clientDetails.Id,
+                                   LoanType = worksheet.Cells[row, 12].Text,
+                                   ProductName = worksheet.Cells[row, 13].Text,
+                                   PrincipalAmount = worksheet.Cells[row, 14].Text,
+                                   LoanTenure = worksheet.Cells[row, 15].Text,
+                                   NumberOfRepayments = worksheet.Cells[row, 16].Text,
+                                   InterestRatePerPeriod = worksheet.Cells[row, 17].Text,
+                                   expectedDisbursementDate = worksheet.Cells[row, 18].Text
+                               };
+                                DbContext.LoanDetails.Add(loandetails);
                             }
                             else
                             {
-                                trand = new TranDetails();
+                                loandetails = new LoanDetails();
                             }
                             
                         }

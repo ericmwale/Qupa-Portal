@@ -18,7 +18,7 @@ namespace PremFEPost.Pages
         private readonly ApplicationDbContext _dbContext;
 
         public int BatchId { get; set; }
-        public IList<TranDetails> BatchItems { get; set; }
+        public IList<LoanDetails> BatchItems { get; set; }
         
         public int PageIndex { get; set; } = 0;
         public int PageSize { get; set; } = 10; // Or your desired page size
@@ -39,7 +39,7 @@ namespace PremFEPost.Pages
 
         public async Task<IActionResult> OnGetDownloadExcel(int id, string searchTerm = null)
         {
-            var query = _dbContext.TranDetails.AsQueryable();
+            var query = _dbContext.LoanDetails.AsQueryable();
 
             if (!string.IsNullOrEmpty(searchTerm))
             {
@@ -91,7 +91,7 @@ namespace PremFEPost.Pages
 
         public async Task<IActionResult> OnGetDownloadAllExcel(int id)
         {
-            var batchItems = await _dbContext.TranDetails.Where(t => t.BatchID == id.ToString()).ToListAsync();
+            var batchItems = await _dbContext.LoanDetails.Where(t => t.BatchID == id.ToString()).ToListAsync();
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             using (var package = new ExcelPackage())
             {
@@ -139,11 +139,11 @@ namespace PremFEPost.Pages
             PageIndex = pageIndex;
 
             // Fetch the total count of items in the batch
-            var totalItems = await _dbContext.TranDetails
+            var totalItems = await _dbContext.LoanDetails
                 .Where(i => i.BatchID == BatchId.ToString())
                 .CountAsync();
 
-            var queryy =  _dbContext.TranDetails
+            var queryy =  _dbContext.LoanDetails
                 .Where(i => i.BatchID == BatchId.ToString())
                 .AsQueryable();
 
@@ -160,7 +160,7 @@ namespace PremFEPost.Pages
             //    .Take(PageSize)
             //    .ToListAsync();
      
-            BatchItems = await _dbContext.TranDetails
+            BatchItems = await _dbContext.LoanDetails
     .Where(i => i.BatchID == BatchId.ToString()
             && (string.IsNullOrEmpty(SearchTerm)
                 || i.Transactionreference.Contains(SearchTerm)|| i.Narration.Contains(SearchTerm))) // Replace YourProperty with the property to search

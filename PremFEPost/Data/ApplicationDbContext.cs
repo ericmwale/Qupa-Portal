@@ -7,7 +7,8 @@ namespace PremFEPost.Data
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
-        public DbSet<TranDetails> TranDetails { get; set; }
+        public DbSet<ClientDetails> ClientDetails { get; set; }
+        public DbSet<LoanDetails> LoanDetails { get; set; }
         public DbSet<BatchDetails> BatchDetails { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
