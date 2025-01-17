@@ -3,6 +3,7 @@
 {
     public class ClientDetails
     {
+
         public int Id { get; set; }
         public string MusoniClientID { get; set; }
         public string FirstName { get; set; }
@@ -20,6 +21,7 @@
         public string DateCreated { get; set; }
         public string BatchId { get; set; }
         public string FileName { get; set; }
+
 
     }
 }

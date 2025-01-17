@@ -196,36 +196,39 @@ namespace PremFEPost.Pages
                             var nid = worksheet.Cells[row, 10].Text;
                             if(nid != null || nid != "")
                             {
-                             clientDetails = new ClientDetails
-                                {
-                                    FileName = bdetails.FileName,
-                                    BatchId = bdetails.Id.ToString(),
-                                    FirstName = worksheet.Cells[row, 1].Text,
-                                    MiddleName = worksheet.Cells[row, 2].Text,
-                                    LastName = worksheet.Cells[row, 3].Text,
-                                    Gender = worksheet.Cells[row, 4].Text.ToUpper(),
-                                    EmailAddress = worksheet.Cells[row, 5].Text,
-                                    Address = worksheet.Cells[row, 6].Text,
-                                    BankName = worksheet.Cells[row, 7].Text,
-                                    BankAccount = worksheet.Cells[row, 8].Text,
-                                    MobileNumber = worksheet.Cells[row, 9].Text,
-                                    NationalID = worksheet.Cells[row, 10].Text,
-                                    DateOfBirth = DateTime.Parse(worksheet.Cells[row, 10].Text).ToString("yyyyMMdd")
-                                };
-                                DbContext.ClientDetails.Add(clientDetails);
+                                clientDetails = new ClientDetails();
 
-                               loandetails = new LoanDetails
+                                clientDetails.FileName = bdetails.FileName;
+                                clientDetails.BatchId = bdetails.Id.ToString();
+                                clientDetails.FirstName = worksheet.Cells[row, 1].Text;
+                                clientDetails.MiddleName = worksheet.Cells[row, 2].Text;
+                                clientDetails.LastName = worksheet.Cells[row, 3].Text;
+                                clientDetails.Gender = worksheet.Cells[row, 4].Text.ToUpper();
+                                clientDetails.EmailAddress = worksheet.Cells[row, 5].Text;
+                                clientDetails.Address = worksheet.Cells[row, 6].Text;
+                                clientDetails.BankName = worksheet.Cells[row, 7].Text;
+                                clientDetails.BankAccount = worksheet.Cells[row, 8].Text;
+                                clientDetails.MobileNumber = worksheet.Cells[row, 9].Text;
+                                clientDetails.NationalID = worksheet.Cells[row, 10].Text;
+                                
+                                clientDetails.DateOfBirth = DateTime.Parse(worksheet.Cells[row, 11].Text).ToString("yyyyMMdd");
+                                clientDetails.DateCreated = DateTime.Now.ToString("yyyyMMdd");
+                                DbContext.ClientDetails.Add(clientDetails);
+                                await DbContext.SaveChangesAsync();
+                                loandetails = new LoanDetails
                                 {
                                     FileName = bdetails.FileName,
                                     BatchID = bdetails.Id.ToString(),
                                     ClientID = clientDetails.Id,
-                                   LoanType = worksheet.Cells[row, 12].Text,
-                                   ProductName = worksheet.Cells[row, 13].Text,
-                                   PrincipalAmount = worksheet.Cells[row, 14].Text,
-                                   LoanTenure = worksheet.Cells[row, 15].Text,
-                                   NumberOfRepayments = worksheet.Cells[row, 16].Text,
-                                   InterestRatePerPeriod = worksheet.Cells[row, 17].Text,
-                                   expectedDisbursementDate = worksheet.Cells[row, 18].Text
+                                    LoanType = worksheet.Cells[row, 12].Text,
+                                    ProductName = worksheet.Cells[row, 13].Text,
+                                    PrincipalAmount = worksheet.Cells[row, 14].Text,
+                                    LoanTenure = worksheet.Cells[row, 15].Text,
+                                    NumberOfRepayments = worksheet.Cells[row, 16].Text,
+                                    InterestRatePerPeriod = worksheet.Cells[row, 17].Text,
+                                    expectedDisbursementDate = worksheet.Cells[row, 18].Text,
+                                    Status = "Pending",
+                                   DateCreated = DateTime.Now.ToString("yyyyMMdd")
                                };
                                 DbContext.LoanDetails.Add(loandetails);
                             }
@@ -237,7 +240,7 @@ namespace PremFEPost.Pages
                         }
 
                         await DbContext.SaveChangesAsync();
-                        await JS.InvokeVoidAsync("callPopup");
+                        
                     }
                 }
             }

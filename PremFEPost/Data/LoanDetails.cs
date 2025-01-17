@@ -2,6 +2,7 @@
 {
     public class LoanDetails
     {
+
         public int Id { get; set; }
         public string MusoniLoanID { get; set; }
         public int MusoniClientID { get; set; }
@@ -19,6 +20,7 @@
         public string FileName { get; set;}
         public string BatchID { get; set;}
         
+
 
     }
 }

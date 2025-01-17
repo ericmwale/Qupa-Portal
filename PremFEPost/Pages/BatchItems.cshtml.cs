@@ -43,8 +43,7 @@ namespace PremFEPost.Pages
 
             if (!string.IsNullOrEmpty(searchTerm))
             {
-                query = query.Where(t => t.Transactionreference.Contains(searchTerm)
-                                    || t.Narration.Contains(searchTerm));
+                query = query;
             }
 
             var batchItems = await query.Where(t => t.BatchID == id.ToString()).ToListAsync();
@@ -69,16 +68,16 @@ namespace PremFEPost.Pages
                 foreach (var item in batchItems)
                 {
                     row++;
-                    worksheet.Cells[row, 1].Value = item.Transactionreference;
-                    worksheet.Cells[row, 2].Value = item.Currency;
-                    worksheet.Cells[row, 3].Value = item.Amount;
-                    worksheet.Cells[row, 4].Value = item.AccountNo;
-                    worksheet.Cells[row, 5].Value = item.DestinationAccount;
-                    worksheet.Cells[row, 6].Value = item.Narration;
+                    worksheet.Cells[row, 1].Value = item.BatchID;
+                    worksheet.Cells[row, 2].Value = item.BatchID;
+                    worksheet.Cells[row, 3].Value = item.BatchID;
+                    worksheet.Cells[row, 4].Value = item.BatchID;
+                    worksheet.Cells[row, 5].Value = item.BatchID;
+                    worksheet.Cells[row, 6].Value = item.BatchID;
                     worksheet.Cells[row, 7].Value = item.Status;
-                    worksheet.Cells[row, 8].Value = item.ResponseMessage;
-                    worksheet.Cells[row, 9].Value = item.TranDate;
-                    worksheet.Cells[row, 10].Value = item.Reference;
+                    worksheet.Cells[row, 8].Value = item.BatchID;
+                    worksheet.Cells[row, 9].Value = item.BatchID;
+                    worksheet.Cells[row, 10].Value = item.BatchID;
                 }
 
                 var stream = new MemoryStream();
@@ -113,16 +112,16 @@ namespace PremFEPost.Pages
                 foreach (var item in batchItems)
                 {
                     row++;
-                    worksheet.Cells[row, 1].Value = item.Transactionreference;
-                    worksheet.Cells[row, 2].Value = item.Currency;
-                    worksheet.Cells[row, 3].Value = item.Amount;
-                    worksheet.Cells[row, 4].Value = item.AccountNo;
-                    worksheet.Cells[row, 5].Value = item.DestinationAccount;
-                    worksheet.Cells[row, 6].Value = item.Narration;
+                    worksheet.Cells[row, 1].Value = item.BatchID;
+                    worksheet.Cells[row, 2].Value = item.BatchID;
+                    worksheet.Cells[row, 3].Value = item.BatchID;
+                    worksheet.Cells[row, 4].Value = item.BatchID;
+                    worksheet.Cells[row, 5].Value = item.BatchID;
+                    worksheet.Cells[row, 6].Value = item.BatchID;
                     worksheet.Cells[row, 7].Value = item.Status;
-                    worksheet.Cells[row, 8].Value = item.ResponseMessage;
-                    worksheet.Cells[row, 9].Value = item.TranDate;
-                    worksheet.Cells[row, 10].Value = item.Reference;
+                    worksheet.Cells[row, 8].Value = item.BatchID;
+                    worksheet.Cells[row, 9].Value = item.BatchID;
+                    worksheet.Cells[row, 10].Value = item.BatchID;
                 }
 
                 var stream = new MemoryStream();
@@ -162,8 +161,7 @@ namespace PremFEPost.Pages
      
             BatchItems = await _dbContext.LoanDetails
     .Where(i => i.BatchID == BatchId.ToString()
-            && (string.IsNullOrEmpty(SearchTerm)
-                || i.Transactionreference.Contains(SearchTerm)|| i.Narration.Contains(SearchTerm))) // Replace YourProperty with the property to search
+           ) // Replace YourProperty with the property to search
     .Skip(PageIndex * PageSize)
     .Take(PageSize)
     .ToListAsync();

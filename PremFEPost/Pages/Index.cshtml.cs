@@ -49,30 +49,7 @@ namespace PremFEPost.Pages
         private void LoadTransactionStats(DateTime dateToUse)
         {
            
-            TransactionStats = _context.LoanDetails
-            .AsEnumerable() // Load data into memory
-            .Where(t => decimal.TryParse(t.Amount, NumberStyles.Any, CultureInfo.InvariantCulture, out _)) // Ensure Amount is numeric
-            .Where(t => DateTime.ParseExact(t.TranDate.Substring(0, 8), "yyyyMMdd", CultureInfo.InvariantCulture).Date == dateToUse.Date)
-            .GroupBy(t => new
-            {
-                t.Currency,
-                t.Status,
-                TransactionDate = DateTime.ParseExact(t.TranDate.Substring(0, 8), "yyyyMMdd", CultureInfo.InvariantCulture).Date,
-                t.BatchID
-            })
-            .Select(g => new TransactionStat
-            {
-                Currency = g.Key.Currency,
-                Status = g.Key.Status,
-                TransactionDate = g.Key.TransactionDate,
-                BatchID = g.Key.BatchID,
-                TotalRecords = g.Count(),
-                TotalAmount = g.Sum(t => decimal.Parse(t.Amount, CultureInfo.InvariantCulture))
-            })
-            .OrderBy(r => r.TransactionDate)
-            .ThenBy(r => r.Currency)
-            .ThenBy(r => r.Status)
-            .ToList();
-            }
+            //TransactionStats = _context.LoanDetails.ToList();
+        }
     }
 }
