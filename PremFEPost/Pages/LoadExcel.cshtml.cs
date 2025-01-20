@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Diagnostics;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using Newtonsoft.Json;
-using QupaIntegrator.Services;
+
 using System.Net.Http.Headers;
 using System.Text;
 
@@ -386,6 +386,10 @@ namespace PremFEPost.Pages
         private object GetProductID(string productName)
         {
             throw new NotImplementedException();
+        }
+        public class CreatedClientResponse
+        {
+            public string Id { get; set; }
         }
     }
 
