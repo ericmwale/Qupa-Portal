@@ -9,13 +9,24 @@ using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using System.Diagnostics;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using Newtonsoft.Json;
+using QupaIntegrator.Services;
+using System.Net.Http.Headers;
+using System.Text;
 
 namespace PremFEPost.Pages
 {
     [Authorize]
     public class LoadExcelModel : PageModel
     {
-
+        private static readonly string connectionString = "";
+        private static readonly string apiUrl = "https://api.demo.irl.musoniservices.com/v1/clients/";
+        private static readonly string loanApiUrl = "https://api.demo.irl.musoniservices.com/v1/loans/";
+        private static readonly string apiKey = "Z7JGicFzcva20O6jxJ8J29V77wiLfoiCaDrTof8Y";
+        private static readonly string tenantId = "qupa";
+        private static readonly string username = "";
+        private static readonly string password = "";
         [BindProperty]
         public bool UploadSuccess { get; set; }
         ApplicationDbContext DbContext;
@@ -74,19 +85,14 @@ namespace PremFEPost.Pages
             //    .Take(PageSize)
             //    .ToListAsync();
 
-            BatchDetailsList = await DbContext.BatchDetails.OrderByDescending(i => i.Date)
-    .Where(i => (string.IsNullOrEmpty(SearchTerm)
-                || i.AuthorisedBy.Contains(SearchTerm) || i.UploadedBy.Contains(SearchTerm))) // Replace YourProperty with the property to search
-    .Skip(PageIndex * PageSize)
-    .Take(PageSize)
-    .ToListAsync();
+                    BatchDetailsList = await DbContext.BatchDetails.OrderByDescending(i => i.Date)
+            .Where(i => (string.IsNullOrEmpty(SearchTerm)
+                        || i.AuthorisedBy.Contains(SearchTerm) || i.UploadedBy.Contains(SearchTerm))) // Replace YourProperty with the property to search
+            .Skip(PageIndex * PageSize)
+            .Take(PageSize)
+            .ToListAsync();
 
         }
-
-
-
-
-
         public static string GenerateUniqueReference()
         {
             // Prefix
@@ -120,18 +126,144 @@ namespace PremFEPost.Pages
                 return new string(result);
             }
         }
+
         public async Task<IActionResult> OnPostApproveAsync(int id)
         {
             var batch = await DbContext.BatchDetails.FindAsync(id);
+
             if (batch != null)
             {
-                var userName = User.Identity.Name;
-                batch.AuthorisedBy = userName;
-                batch.Status = "Approved"; // Change status to Approved
-                await DbContext.SaveChangesAsync(); // Save changes to the database
+
+                var loanclientdetails = DbContext.LoanDetails
+                 .Where(loan => loan.BatchID == batch.Id.ToString())
+                .Join(
+                    DbContext.ClientDetails,
+                    loan => loan.ClientID,
+                    client => client.Id,
+                    (loan, client) => new
+                    {
+                        loanid = loan.Id,
+                        MusoniLoanId = loan.MusoniLoanID,
+                        MusoniClientID = loan.MusoniClientID,
+                        ClientID = loan.ClientID,
+                        Loantype = loan.LoanType,
+                        ProductName = loan.ProductName,
+                        PrincipalAmount = loan.PrincipalAmount,
+                        LoanTenure = loan.LoanTenure,
+                        NumberOfRepayments = loan.NumberOfRepayments,
+                        InterestRatePerPeriod = loan.InterestRatePerPeriod,
+                        ExpectedDisbursementDate = loan.expectedDisbursementDate,
+                        Status = loan.Status,
+                        MusoniLoanStatus = loan.MusoniLoanStatus,
+                        DateCreated = loan.DateCreated,
+                        FirstName = client.FirstName,
+                        LastName = client.LastName,
+                        MiddleName = client.MiddleName,
+                        Gender = client.Gender,
+                        EmailAddress = client.EmailAddress,
+                        Address = client.Address,
+                        BankName = client.BankName,
+                        BankAccount = client.BankAccount,
+                        MobileNumber = client.MobileNumber,
+                        NationalID = client.NationalID,
+                        DateOfBirth = client.DateOfBirth,
+                        MusoniClientStatus = client.MusoniClientStatus,
+                    }
+                );
+
+                // Execute the query and display results (optional)
+                foreach (var item in loanclientdetails)
+                {
+                    ////insert client
+                    using (HttpClient httpClient = new HttpClient())
+                    {
+                        httpClient.DefaultRequestHeaders.Add("x-api-key", apiKey);
+                        httpClient.DefaultRequestHeaders.Add("X-Fineract-Platform-TenantId", tenantId);
+                        httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+
+                        var authToken = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{password}"));
+                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authToken);
+
+                        var json = JsonConvert.SerializeObject(new
+                        {
+                            active = true,
+                            dateFormat = "dd MMMM yyyy",
+                            officeId = 50,
+                            firstname = item.FirstName,
+                            middlename = item.MiddleName,
+                            lastname = item.LastName,
+                            locale = "en",
+                            mobileNo = item.MobileNumber,
+                            externalId = item.NationalID,
+                            activationDate = DateTime.Now.ToString("dd MMMM yyyy"),
+                            dateOfBirth = DateTime.Parse(item.DateOfBirth).ToString("dd MMMM yyyy")
+                        });
+
+                        var content = new StringContent(json, Encoding.UTF8, "application/json");
+                        var response = await httpClient.PostAsync(apiUrl, content);
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            var responseBody = await response.Content.ReadAsStringAsync();
+                            var createdClient = JsonConvert.DeserializeObject<CreatedClientResponse>(responseBody);
+                            var idm = createdClient.Id;//client created 
+
+                            authToken = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{password}"));
+                            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authToken);
+                            ///product id 
+                            json = JsonConvert.SerializeObject(new
+                            {
+                                loanType = item.Loantype,
+                                productId = GetProductID(item.ProductName),
+                                clientId = idm,
+                                principal = item.PrincipalAmount,
+                                loanTermFrequency = item.LoanTenure,
+                                loanTermFrequencyType = 0,
+                                numberOfRepayments = item.NumberOfRepayments,
+                                repaymentEvery = 0,
+                                repaymentFrequencyType = 0,
+                                interestType = 0,
+                                interestCalculationPeriodType = 1,
+                                interestRatePerPeriod = item.InterestRatePerPeriod,
+                                amortizationType = 1,
+                                transactionProcessingStrategyId = 1,
+                                expectedDisbursementDate = item.ExpectedDisbursementDate,
+                                submittedOnDate = DateTime.Parse(item.DateCreated).ToString("dd MMMM yyyy"),
+                                locale = "en",
+                                dateFormat = "dd MMMM yyyy"
+                            });
+
+                            content = new StringContent(json, Encoding.UTF8, "application/json");
+                            response = await httpClient.PostAsync(loanApiUrl, content);
+
+                            var results = response.StatusCode.ToString();
+                            return RedirectToPage();
+
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Failed to create client: {response.StatusCode}");
+                            return RedirectToPage();
+                        }
+
+                        ///insert loan
+                    }
+
+                    var userName = User.Identity.Name;
+                    batch.AuthorisedBy = userName;
+                    batch.Status = "Approved"; // Change status to Approved
+                    await DbContext.SaveChangesAsync(); // Save changes to the database
+                }
+
+
+                BatchDetailsList = DbContext.BatchDetails.OrderByDescending(b => b.Date).ToList();
+                return RedirectToPage(); // Redirect back to the page
             }
-            BatchDetailsList = DbContext.BatchDetails.OrderByDescending(b => b.Date).ToList();
-            return RedirectToPage(); // Redirect back to the page
+            else
+            {
+                return RedirectToPage();
+            }
         }
 
         public async Task<IActionResult> OnPostRejectAsync(int id)
@@ -251,5 +383,11 @@ namespace PremFEPost.Pages
             BatchDetailsList = DbContext.BatchDetails.OrderByDescending(b => b.Date).ToList();
             return Page(); // Return the same page to show the result
         }
+        private object GetProductID(string productName)
+        {
+            throw new NotImplementedException();
+        }
     }
-}
+
+
+    }

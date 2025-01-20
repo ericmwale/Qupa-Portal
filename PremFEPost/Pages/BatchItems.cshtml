@@ -29,16 +29,16 @@
 <table class="table table-bordered">
     <thead>
         <tr>
-            <th>Tran Reference</th>
-            <th>Currency</th>
-            <th>Amount</th>
-            <th>DR Account</th>
-            <th>CR Account</th>
-            <th>Narration</th>
+            <th>ID</th>
+            <th>Musoni Loan Id</th>
+            <th>Musoni Client ID</th>
+            <th>ClientID</th>
+            <th>Loan Type</th>
+            <th>Interest</th>
             <th>Status</th>
-            <th>Message</th>
-            <th>Date Time</th>
-            <th>Reference</th>
+            <th>Musoni Loan Status</th>
+            <th>Principal Amount</th>
+            <th>Date Created</th>
         </tr>
     </thead>
     <tbody>
@@ -47,16 +47,16 @@
             foreach (var item in Model.BatchItems)
             {
                 <tr>
-@*                     <td>@item.Transactionreference</td>
-                    <td>@item.Currency</td>
-                    <td>@item.Amount</td>
-                    <td>@item.AccountNo</td>
-                    <td>@item.DestinationAccount</td>
-                    <td>@item.Narration</td>
+                    <td>@item.Id</td>
+                    <td>@item.MusoniLoanID</td>
+                    <td>@item.MusoniClientID</td>
+                    <td>@item.ClientID</td>
+                    <td>@item.LoanType</td>
+                    <td>@item.InterestRatePerPeriod</td>
                     <td>@item.Status</td>
-                    <td>@item.ResponseMessage</td>
-                    <td>@item.TranDate</td>
-                    <td>@item.Reference</td> *@
+                    <td>@item.MusoniLoanStatus</td>
+                    <td>@item.PrincipalAmount</td>
+                    <td>@item.DateCreated</td> 
                 </tr>
             }
         }

@@ -49,6 +49,7 @@
     <table id="batchDetailsTable" class="table table-bordered">
         <thead>
             <tr>
+                <th>Batch ID</th>
                 <th>File Name</th>
                 <th>Upload Date</th>
                 <th>Uploaded By</th>
@@ -62,6 +63,7 @@
             @foreach (var batch in Model.BatchDetailsList)
             {
                 <tr>
+                    <td>@batch.Id</td>
                     <td>@batch.FileName</td>
                     <td>@batch.Date</td>
                     <td>@batch.UploadedBy</td>
