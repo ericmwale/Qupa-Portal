@@ -23,10 +23,11 @@ namespace PremFEPost.Pages
         private static readonly string connectionString = "";
         private static readonly string apiUrl = "https://api.demo.irl.musoniservices.com/v1/clients/";
         private static readonly string loanApiUrl = "https://api.demo.irl.musoniservices.com/v1/loans/";
+        private static readonly string PostBankApiUrl = "https://api.demo.irl.musoniservices.com/v1/datatables/ml_client_details/";
         private static readonly string apiKey = "Z7JGicFzcva20O6jxJ8J29V77wiLfoiCaDrTof8Y";
         private static readonly string tenantId = "qupa";
-        private static readonly string username = "";
-        private static readonly string password = "";
+        private static readonly string username = "qupabi";
+        private static readonly string password = "T@ff0723Z1z112";
         [BindProperty]
         public bool UploadSuccess { get; set; }
         ApplicationDbContext DbContext;
@@ -112,20 +113,39 @@ namespace PremFEPost.Pages
         private static string GenerateRandomString(int length)
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            using (var rng = new RNGCryptoServiceProvider())
+            char[] result = new char[length];
+
+            using (var rng = RandomNumberGenerator.Create())
             {
                 byte[] randomBytes = new byte[length];
                 rng.GetBytes(randomBytes);
-                char[] result = new char[length];
 
                 for (int i = 0; i < length; i++)
                 {
+                    // Use the byte value directly to get a valid index
                     result[i] = chars[randomBytes[i] % chars.Length];
                 }
-
-                return new string(result);
             }
+
+            return new string(result);
         }
+        //private static string GenerateRandomString(int length)
+        //{
+        //    const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        //    using (var rng = new RNGCryptoServiceProvider())
+        //    {
+        //        byte[] randomBytes = new byte[length];
+        //        rng.GetBytes(randomBytes);
+        //        char[] result = new char[length];
+
+        //        for (int i = 0; i < length; i++)
+        //        {
+        //            result[i] = chars[randomBytes[i] % chars.Length];
+        //        }
+
+        //        return new string(result);
+        //    }
+        //}
 
         public async Task<IActionResult> OnPostApproveAsync(int id)
         {
@@ -202,13 +222,28 @@ namespace PremFEPost.Pages
 
                         var content = new StringContent(json, Encoding.UTF8, "application/json");
                         var response = await httpClient.PostAsync(apiUrl, content);
+                        var responseBody = await response.Content.ReadAsStringAsync();
+                        var createdClient = JsonConvert.DeserializeObject<CreatedClientResponse>(responseBody);
+                        var idm = createdClient.Id;//client created 
 
                         if (response.IsSuccessStatusCode)
                         {
-                            var responseBody = await response.Content.ReadAsStringAsync();
-                            var createdClient = JsonConvert.DeserializeObject<CreatedClientResponse>(responseBody);
-                            var idm = createdClient.Id;//client created 
+                            authToken = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{password}"));
+                            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authToken);
+                            ///product id 
+                            json = JsonConvert.SerializeObject(new
+                            {
+                                BankAccount = item.BankAccount,
+                                locale = "en",
+                                dateFormat = "dd MMMM yyyy"
+                            });
 
+                            content = new StringContent(json, Encoding.UTF8, "application/json");
+                            response = await httpClient.PostAsync(PostBankApiUrl, content); 
+                        }
+
+                        if (response.IsSuccessStatusCode)
+                        {
                             authToken = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{password}"));
                             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authToken);
                             ///product id 
@@ -311,7 +346,7 @@ namespace PremFEPost.Pages
                         var bdetails = new BatchDetails
                         {
                             FileName = excelFile.FileName,
-                            Date = DateTime.Now.ToString("yyyyMMdd"),
+                            Date = DateTime.Now.ToString("dd MMMM yyyy"),
                            
                             UploadedBy = userName,
                             AuthorisedBy = "",
@@ -332,6 +367,7 @@ namespace PremFEPost.Pages
 
                                 clientDetails.FileName = bdetails.FileName;
                                 clientDetails.BatchId = bdetails.Id.ToString();
+                                clientDetails.MusoniClientID = "0";
                                 clientDetails.FirstName = worksheet.Cells[row, 1].Text;
                                 clientDetails.MiddleName = worksheet.Cells[row, 2].Text;
                                 clientDetails.LastName = worksheet.Cells[row, 3].Text;
@@ -341,10 +377,10 @@ namespace PremFEPost.Pages
                                 clientDetails.BankName = worksheet.Cells[row, 7].Text;
                                 clientDetails.BankAccount = worksheet.Cells[row, 8].Text;
                                 clientDetails.MobileNumber = worksheet.Cells[row, 9].Text;
-                                clientDetails.NationalID = worksheet.Cells[row, 10].Text;
-                                
-                                clientDetails.DateOfBirth = DateTime.Parse(worksheet.Cells[row, 11].Text).ToString("yyyyMMdd");
-                                clientDetails.DateCreated = DateTime.Now.ToString("yyyyMMdd");
+                                clientDetails.NationalID = worksheet.Cells[row, 10].Text;                               
+                                clientDetails.DateOfBirth = DateTime.Parse(worksheet.Cells[row, 11].Text).ToString("dd MMMM yyyy");
+                                clientDetails.MusoniClientStatus = "0";
+                                clientDetails.DateCreated = DateTime.Now.ToString("dd MMMM yyyy");
                                 DbContext.ClientDetails.Add(clientDetails);
                                 await DbContext.SaveChangesAsync();
                                 loandetails = new LoanDetails
@@ -352,6 +388,8 @@ namespace PremFEPost.Pages
                                     FileName = bdetails.FileName,
                                     BatchID = bdetails.Id.ToString(),
                                     ClientID = clientDetails.Id,
+                                    MusoniLoanID = "0",
+                                    MusoniClientID = 0,
                                     LoanType = worksheet.Cells[row, 12].Text,
                                     ProductName = worksheet.Cells[row, 13].Text,
                                     PrincipalAmount = worksheet.Cells[row, 14].Text,
@@ -360,7 +398,8 @@ namespace PremFEPost.Pages
                                     InterestRatePerPeriod = worksheet.Cells[row, 17].Text,
                                     expectedDisbursementDate = worksheet.Cells[row, 18].Text,
                                     Status = "Pending",
-                                   DateCreated = DateTime.Now.ToString("yyyyMMdd")
+                                    MusoniLoanStatus = "0",
+                                    DateCreated = DateTime.Now.ToString("dd MMMM yyyy")
                                };
                                 DbContext.LoanDetails.Add(loandetails);
                             }
